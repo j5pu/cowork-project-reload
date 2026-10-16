@@ -22,6 +22,12 @@ Si no hay carpeta de proyecto conectada, el agente lo dice en una línea y no in
 
 En Cowork: Personalizar → Plugins → Añadir → marketplace `j5pu/cowork-project-reload`.
 
+En Claude Code (2.1.275 o posterior):
+
+```
+/plugin install cowork-project-reload --marketplace j5pu/cowork-project-reload
+```
+
 ## Estado de las pruebas
 
 Probado con Claude Code 2.1.299 (el que incluye la app de escritorio), con `--plugin-dir`:
@@ -29,7 +35,15 @@ Probado con Claude Code 2.1.299 (el que incluye la app de escritorio), con `--pl
 - `SessionStart:startup`: el texto llega al modelo. Verificado.
 - `SessionStart:compact`: se ejecuta tras `/compact` y queda registrado en la sesión como contexto añadido. Verificado.
 - `PreCompact`: se ejecuta antes de `/compact` (estado 0). Sin embargo, en la prueba su texto solo aparece como salida del comando en la interfaz; el resumen generado mantuvo la regla y la decisión de la prueba, pero con la estructura estándar, no con las secciones REGLAS / DECISIONES / PASO EN CURSO. **No está demostrado que este hook modifique el resumen.**
+- Tras compactar, el agente recupera una regla escrita en `CLAUDE.md` (prueba real con una palabra clave de proyecto). Verificado.
 - Carga dentro de Cowork: no verificada todavía; la documentación oficial indica que los hooks se cargan en Cowork, pero falta una prueba real en un chat.
+
+## Cómo probarlo
+
+```
+tests/run.sh                      # pruebas de los scripts
+tests/run.sh /ruta/a/claude       # además, prueba real con Claude Code (startup, /compact, relectura)
+```
 
 ## Estructura
 
@@ -39,6 +53,7 @@ Probado con Claude Code 2.1.299 (el que incluye la app de escritorio), con `--pl
 hooks/hooks.json                  registro de los hooks
 hooks/session-start.sh            texto de SessionStart (startup | compact)
 hooks/pre-compact.sh              texto de PreCompact
+tests/run.sh                      pruebas
 ```
 
 ## Licencia
