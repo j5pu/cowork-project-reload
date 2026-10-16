@@ -24,6 +24,13 @@ export const TEXTO_COMPACTACION =
 
 let huboCompactacion = false
 
+// Aviso visible para el usuario (toast arriba a la derecha y linea tenue en la transcripcion).
+// Nunca debe romper nada: si $.ui no existe (pruebas) o falla, se ignora.
+const avisar = ($: any, text: string) => {
+  try { $.ui.toast(text) } catch { /* sin interfaz */ }
+  try { $.ui.log(text) } catch { /* sin interfaz */ }
+}
+
 export const register: Register = on => {
   // Antes de compactar: pedir al resumidor que conserve reglas, decisiones y paso en curso.
   on('session.compact', async ($, e, next) => {
@@ -31,10 +38,20 @@ export const register: Register = on => {
     const instructions = e.instructions
       ? `${e.instructions}\n\n${INSTRUCCIONES_RESUMEN}`
       : INSTRUCCIONES_RESUMEN
+    if (e.trigger !== 'precompute') avisar($, 'cowork-project-reload: ANTES de compactar. Se pide al resumen conservar reglas, decisiones y paso en curso.')
     const r = await next({ ...e, instructions })
-    if (r.skip === undefined && e.trigger !== 'precompute') huboCompactacion = true
+    if (r.skip === undefined && e.trigger !== 'precompute') {
+      huboCompactacion = true
+      avisar($, 'cowork-project-reload: DESPUES de compactar. Se pedira releer CLAUDE.md y los skills.')
+    }
     return r
   }).catch(($, e, next) => next(e)) // si el hook falla, la compactación sigue normal
+
+  // Al iniciar un chat: aviso visible (no cambia nada del contexto).
+  on('session.start', async ($, e, next) => {
+    avisar($, 'cowork-project-reload: CHAT NUEVO. Se pedira leer CLAUDE.md y los skills.')
+    return next(e)
+  })
 
   // Al iniciar un chat y tras cada compactación (el motor vuelve a pedir el contexto).
   on('prompt.context', async ($, e, next) => {

@@ -47,3 +47,23 @@ test('carga real en el motor: el bloque llega al contexto', async ($, on) => {
   const r = await $.prompt.context({ blocks: [] })
   expect(r.blocks.some(x => x.name === 'relecturaProyecto')).toBe(true)
 })
+
+test('avisos visibles: chat nuevo, antes y despues de compactar', async () => {
+  const h = cargar()
+  const dichos: string[] = []
+  const $ = { ui: { toast: (t: string) => dichos.push(t), log: (t: string) => dichos.push(t) } }
+  await h['session.start']($, {}, async (e: any) => e)
+  await h['session.compact']($, { trigger: 'auto', messages: msgs }, async () => ({ messages: msgs }))
+  const todo = dichos.join('\n')
+  expect(todo).toContain('CHAT NUEVO')
+  expect(todo).toContain('ANTES de compactar')
+  expect(todo).toContain('DESPUES de compactar')
+})
+
+test('precompute no muestra avisos', async () => {
+  const h = cargar()
+  const dichos: string[] = []
+  const $ = { ui: { toast: (t: string) => dichos.push(t), log: (t: string) => dichos.push(t) } }
+  await h['session.compact']($, { trigger: 'precompute', messages: msgs }, async () => ({ messages: msgs }))
+  expect(dichos.length).toBe(0)
+})

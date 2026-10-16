@@ -8,18 +8,19 @@ Cuando una conversación se compacta, el historial se sustituye por un resumen. 
 
 ## Qué hacen los hooks y qué cambian
 
-El plugin es un mod con dos hooks, en `hooks/register.ts`. Se explican por separado porque el directorio pide detallar qué ve y qué cambia cada uno.
+El plugin es un mod con tres hooks, en `hooks/register.ts`. Se explican por separado porque el directorio pide detallar qué ve y qué cambia cada uno.
 
-### Hook `session.compact` (línea 29 de `register.ts`)
+### Hook `session.compact` (línea 36 de `register.ts`)
 
 `session.compact` es un evento que también es el nombre de una llamada: cuando Claude Code compacta la conversación, el hook ve esa llamada, y podría cambiarla. El mod **no hace esa llamada por sí mismo**; solo la intercepta cuando otro código la hace.
 
 - **Qué ve:** el evento de compactación: quién la dispara (`trigger`), si es de un subagente (`agentId`) y las instrucciones de resumen que ya lleve (`instructions`).
 - **Qué cambia:** únicamente el campo `instructions`. Le añade al final un texto fijo que pide copiar literalmente reglas, decisiones y paso en curso en secciones propias, y escribir "no consta" si algo no está claro. Si ya había instrucciones, las conserva y añade las suyas detrás.
 - **Qué no toca:** ningún otro campo de la llamada, el resultado de la compactación, los mensajes ni los archivos. Ignora las compactaciones de subagentes.
+- **Aviso visible:** muestra al usuario un aviso (`$.ui.toast` y `$.ui.log`) justo antes y justo después de compactar. Es solo texto en pantalla; no entra en el contexto del modelo.
 - **Si falla:** el manejador `.catch` deja pasar el evento sin cambios y la compactación sigue normal.
 
-### Hook `prompt.context` (línea 40 de `register.ts`)
+### Hook `prompt.context` (línea 57 de `register.ts`)
 
 `prompt.context` es un evento por el que pasan las instrucciones y el contexto que recibe el modelo.
 
@@ -27,7 +28,12 @@ El plugin es un mod con dos hooks, en `hooks/register.ts`. Se explican por separ
 - **Qué cambia:** **añade un bloque** (`relecturaProyecto`) con un texto fijo. En un chat nuevo pide leer entero `CLAUDE.md`, listar los skills de `.claude/skills/*/SKILL.md` y leer completo el que encaje con la tarea. Tras una compactación pide lo mismo y, además, contrastar el resumen con lo releído y avisar al usuario si no se puede recuperar qué se hacía o qué se había decidido.
 - **Qué no toca:** no modifica, quita ni reordena los bloques existentes, ni los ajustes, ni otras instrucciones.
 
-Ninguno de los dos hooks hace llamadas de red, ni lee o escribe archivos, ni lee variables de entorno o ajustes, ni guarda los mensajes del usuario. El texto que añaden es siempre el mismo.
+### Hook `session.start` (línea 51 de `register.ts`)
+
+- **Qué hace:** al empezar un chat muestra un aviso visible (`$.ui.toast` y `$.ui.log`): "CHAT NUEVO. Se pedirá leer CLAUDE.md y los skills".
+- **Qué cambia:** nada. Deja pasar el evento tal cual; el aviso es solo para el usuario y no entra en el contexto del modelo.
+
+Ningún hook hace llamadas de red, ni lee o escribe archivos, ni lee variables de entorno o ajustes, ni guarda los mensajes del usuario. Solo llaman a `$.ui.toast` y `$.ui.log` para mostrar avisos. El texto que añaden es siempre el mismo.
 
 ## Instalación
 
@@ -39,12 +45,29 @@ En Claude Code (2.1.287 o posterior, por los mods):
 /plugin install cowork-project-reload --marketplace j5pu/cowork-project-reload
 ```
 
+## Cómo saber que funciona
+
+Verás avisos en pantalla: un cuadro arriba a la derecha y una línea tenue en la transcripción, al empezar un chat ("CHAT NUEVO"), antes de compactar ("ANTES de compactar") y después ("DESPUES de compactar"). Después de compactar, el agente debería releer `CLAUDE.md` y los skills.
+
 ## Estado de las pruebas
 
-- `claude plugin test` pasa 4 de 4 con Claude Code 2.1.299, incluida la carga real en el motor (el bloque llega al contexto).
-- Carga en una sesión real con el plugin instalado: el módulo se carga y se admite (`loaded; events: session.compact, prompt.context`).
-- **Sin verificar:** en la sesión real, el log mostró `bypassed by cc-plugin-sec-default (tier user)` para ambos eventos y el resumen salió con la estructura estándar, sin las secciones REGLAS / DECISIONES / PASO EN CURSO. No está demostrado todavía que el mod modifique el resumen en una sesión real.
-- No verificado dentro de Cowork.
+- `claude plugin test`: 6 de 6 con Claude Code 2.1.299, incluida la carga real en el motor y los avisos.
+- Sesión real con el plugin como mod de la organización (declarado en los ajustes gestionados): los tres avisos se disparan y el resumen de la compactación sale con las secciones REGLAS, DECISIONES y PASO EN CURSO, marcando "No consta" lo que no se sabe. **Verificado.**
+- Sesión real con el plugin instalado como un usuario cualquiera en una cuenta Team o con ajustes gestionados: la guarda `cc-plugin-sec-default` salta `session.compact` y `prompt.context` (`bypassed ... tier user`) y el mod no actúa. Para esas máquinas, el administrador debe declarar el plugin en los ajustes gestionados (ver más abajo). En máquinas sin guarda debería funcionar, pero no se ha probado.
+- Cowork: no se lista en el directorio (el directorio lista los mods solo para Claude Code) y no se ha verificado allí.
+
+### Máquinas con ajustes gestionados
+
+En `managed-settings.json`, declarar el marketplace como carpeta local y activar el plugin:
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "cowork-project-reload": { "source": { "source": "directory", "path": "/ruta/a/cowork-project-reload" } }
+  },
+  "enabledPlugins": { "cowork-project-reload@cowork-project-reload": true }
+}
+```
 
 ## Estructura
 
@@ -52,7 +75,7 @@ En Claude Code (2.1.287 o posterior, por los mods):
 .claude-plugin/plugin.json        manifiesto
 .claude-plugin/marketplace.json   catálogo de un solo plugin
 hooks/hooks.json                  registra el módulo
-hooks/register.ts                 los dos enganches
+hooks/register.ts                 los tres enganches
 hooks/register.test.ts            pruebas (bun test / claude plugin test)
 ```
 
