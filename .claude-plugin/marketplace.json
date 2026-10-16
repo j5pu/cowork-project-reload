@@ -1,5 +1,13 @@
 {
   "name": "cowork-project-reload",
-  "owner": { "name": "mnopi" },
-  "plugins": [{ "name": "cowork-project-reload", "source": "./" }]
+  "description": "Plugin de Claude Cowork que relee CLAUDE.md y los skills del proyecto al iniciar un chat y tras compactar.",
+  "owner": {
+    "name": "mnopi"
+  },
+  "plugins": [
+    {
+      "name": "cowork-project-reload",
+      "source": "./"
+    }
+  ]
 }
