@@ -1,0 +1,5 @@
+{
+  "name": "cowork-project-reload",
+  "owner": { "name": "mnopi" },
+  "plugins": [{ "name": "cowork-project-reload", "source": "./" }]
+}
