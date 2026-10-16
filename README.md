@@ -55,3 +55,7 @@ assets/icon.svg                   icono
 ```
 
 Los eventos y métodos de los mods pueden cambiar entre versiones de Claude Code; ante cualquier discrepancia, mandan las declaraciones de tipos que Claude Code genera en `.claude-plugin/types/` al cargar el plugin.
+
+## Licencia
+
+MIT. Ver [LICENSE](LICENSE).
