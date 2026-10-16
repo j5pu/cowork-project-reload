@@ -38,18 +38,18 @@ export const register: Register = on => {
     const instructions = e.instructions
       ? `${e.instructions}\n\n${INSTRUCCIONES_RESUMEN}`
       : INSTRUCCIONES_RESUMEN
-    if (e.trigger !== 'precompute') avisar($, 'cowork-project-reload: ANTES de compactar. Se pide al resumen conservar reglas, decisiones y paso en curso.')
+    if (e.trigger !== 'precompute') avisar($, 'Before compacting: asking the summary to keep your rules, the decisions made and the current step word for word.')
     const r = await next({ ...e, instructions })
     if (r.skip === undefined && e.trigger !== 'precompute') {
       huboCompactacion = true
-      avisar($, 'cowork-project-reload: DESPUES de compactar. Se pedira releer CLAUDE.md y los skills.')
+      avisar($, 'Compaction done: asking the agent to re-read the project CLAUDE.md and skills, and to tell you if it cannot recover what was being done.')
     }
     return r
   }).catch(($, e, next) => next(e)) // si el hook falla, la compactación sigue normal
 
   // Al iniciar un chat: aviso visible (no cambia nada del contexto).
   on('session.start', async ($, e, next) => {
-    avisar($, 'cowork-project-reload: CHAT NUEVO. Se pedira leer CLAUDE.md y los skills.')
+    avisar($, 'New chat: asking the agent to read the project CLAUDE.md and skills before starting.')
     return next(e)
   })
 

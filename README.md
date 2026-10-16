@@ -30,7 +30,7 @@ El plugin es un mod con tres hooks, en `hooks/register.ts`. Se explican por sepa
 
 ### Hook `session.start` (línea 51 de `register.ts`)
 
-- **Qué hace:** al empezar un chat muestra un aviso visible (`$.ui.toast` y `$.ui.log`): "CHAT NUEVO. Se pedirá leer CLAUDE.md y los skills".
+- **Qué hace:** al empezar un chat muestra un aviso visible (`$.ui.toast` y `$.ui.log`): "New chat: asking the agent to read the project CLAUDE.md and skills before starting".
 - **Qué cambia:** nada. Deja pasar el evento tal cual; el aviso es solo para el usuario y no entra en el contexto del modelo.
 
 Ningún hook hace llamadas de red, ni lee o escribe archivos, ni lee variables de entorno o ajustes, ni guarda los mensajes del usuario. Solo llaman a `$.ui.toast` y `$.ui.log` para mostrar avisos. El texto que añaden es siempre el mismo.
@@ -47,7 +47,7 @@ En Claude Code (2.1.287 o posterior, por los mods):
 
 ## Cómo saber que funciona
 
-Verás avisos en pantalla: un cuadro arriba a la derecha y una línea tenue en la transcripción, al empezar un chat ("CHAT NUEVO"), antes de compactar ("ANTES de compactar") y después ("DESPUES de compactar"). Después de compactar, el agente debería releer `CLAUDE.md` y los skills.
+Verás avisos en pantalla: un cuadro arriba a la derecha y una línea tenue en la transcripción, al empezar un chat ("New chat: asking the agent to read the project CLAUDE.md and skills…"), before compacting ("Before compacting: asking the summary to keep your rules, the decisions made and the current step word for word") and after ("Compaction done: asking the agent to re-read the project CLAUDE.md and skills…"). Los avisos están en inglés. Después de compactar, el agente debería releer `CLAUDE.md` y los skills.
 
 ## Estado de las pruebas
 

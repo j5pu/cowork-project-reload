@@ -55,9 +55,9 @@ test('avisos visibles: chat nuevo, antes y despues de compactar', async () => {
   await h['session.start']($, {}, async (e: any) => e)
   await h['session.compact']($, { trigger: 'auto', messages: msgs }, async () => ({ messages: msgs }))
   const todo = dichos.join('\n')
-  expect(todo).toContain('CHAT NUEVO')
-  expect(todo).toContain('ANTES de compactar')
-  expect(todo).toContain('DESPUES de compactar')
+  expect(todo).toContain('New chat')
+  expect(todo).toContain('Before compacting')
+  expect(todo).toContain('Compaction done')
 })
 
 test('precompute no muestra avisos', async () => {
