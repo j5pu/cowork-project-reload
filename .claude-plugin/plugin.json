@@ -1,6 +1,6 @@
 {
   "name": "cowork-project-reload",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Al iniciar un chat y tras cada compactación, obliga a releer CLAUDE.md y los skills del proyecto; pide conservar reglas y decisiones al compactar.",
   "author": {
     "name": "mnopi"
