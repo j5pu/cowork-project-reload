@@ -1,6 +1,6 @@
 {
   "name": "cowork-project-reload",
-  "description": "Plugin de Claude Cowork que relee CLAUDE.md y los skills del proyecto al iniciar un chat y tras compactar.",
+  "description": "Plugin that re-reads the project's CLAUDE.md and skills when a chat starts and after compaction.",
   "owner": {
     "name": "mnopi"
   },

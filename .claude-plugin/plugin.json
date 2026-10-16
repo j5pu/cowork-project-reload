@@ -1,7 +1,7 @@
 {
   "name": "cowork-project-reload",
   "version": "0.4.0",
-  "description": "Al iniciar un chat y tras cada compactación, obliga a releer CLAUDE.md y los skills del proyecto; pide conservar reglas y decisiones al compactar.",
+  "description": "When a chat starts and after every compaction, makes the agent re-read the project's CLAUDE.md and skills; asks the compaction summary to keep rules and decisions.",
   "author": {
     "name": "mnopi"
   },

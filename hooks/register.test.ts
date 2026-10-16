@@ -1,8 +1,8 @@
 import { test, expect } from 'claude-code/testing'
 import { register } from './register'
 
-// Captura los hooks del plugin y los ejecuta con un "motor" falso.
-function cargar() {
+// Captures the plugin's hooks and runs them against a fake engine.
+function load() {
   const hooks: Record<string, any> = {}
   const on: any = (ev: string, a: any, b?: any) => {
     hooks[ev] = typeof a === 'function' ? a : b
@@ -11,59 +11,59 @@ function cargar() {
   register(on, {} as any)
   return hooks
 }
-const msgs = [{ role: 'user', text: 'hola', toolUses: [] }]
+const msgs = [{ role: 'user', text: 'hello', toolUses: [] }]
+const block = (r: any) => r.blocks.find((x: any) => x.name === 'projectReload').text
 
-test('nuevo chat: pide leer CLAUDE.md y skills', async () => {
-  const h = cargar()
+test('new chat: asks to read CLAUDE.md and skills', async () => {
+  const h = load()
   const r = await h['prompt.context']({}, { blocks: [] }, async (e: any) => e)
-  const t = r.blocks.find((x: any) => x.name === 'relecturaProyecto').text
-  expect(t).toContain('Nuevo chat')
+  const t = block(r)
+  expect(t).toContain('New chat')
   expect(t).toContain('.claude/skills')
 })
 
-test('compactación: instruye al resumidor y avisa después, una sola vez', async () => {
-  const h = cargar()
-  let recibidas = ''
+test('compaction: instructs the summarizer and notes it afterwards, only once', async () => {
+  const h = load()
+  let received = ''
   await h['session.compact']({}, { trigger: 'auto', instructions: 'extra', messages: msgs },
-    async (e: any) => { recibidas = e.instructions; return { messages: msgs } })
-  expect(recibidas).toContain('extra')
-  expect(recibidas).toContain('LITERALMENTE')
-  const ctx = async () => (await h['prompt.context']({}, { blocks: [] }, async (e: any) => e))
-    .blocks.find((x: any) => x.name === 'relecturaProyecto').text
-  expect(await ctx()).toContain('Ha habido compactación')
-  expect(await ctx()).toContain('Nuevo chat')
+    async (e: any) => { received = e.instructions; return { messages: msgs } })
+  expect(received).toContain('extra')
+  expect(received).toContain('LITERALLY')
+  const ctx = async () => block(await h['prompt.context']({}, { blocks: [] }, async (e: any) => e))
+  expect(await ctx()).toContain('A compaction has just happened')
+  expect(await ctx()).toContain('New chat')
 })
 
-test('subagentes y precompute no disparan el aviso', async () => {
-  const h = cargar()
+test('subagents and precompute do not trigger the notice', async () => {
+  const h = load()
   await h['session.compact']({}, { trigger: 'precompute', messages: msgs }, async () => ({ messages: msgs }))
   await h['session.compact']({}, { trigger: 'auto', agentId: 'x', messages: msgs }, async () => ({ messages: msgs }))
   const r = await h['prompt.context']({}, { blocks: [] }, async (e: any) => e)
-  expect(r.blocks.find((x: any) => x.name === 'relecturaProyecto').text).toContain('Nuevo chat')
+  expect(block(r)).toContain('New chat')
 })
 
-test('carga real en el motor: el bloque llega al contexto', async ($, on) => {
+test('real engine load: the block reaches the context', async ($, on) => {
   on('prompt.context', () => ({ blocks: [] }))
   const r = await $.prompt.context({ blocks: [] })
-  expect(r.blocks.some(x => x.name === 'relecturaProyecto')).toBe(true)
+  expect(r.blocks.some(x => x.name === 'projectReload')).toBe(true)
 })
 
-test('avisos visibles: chat nuevo, antes y despues de compactar', async () => {
-  const h = cargar()
-  const dichos: string[] = []
-  const $ = { ui: { toast: (t: string) => dichos.push(t), log: (t: string) => dichos.push(t) } }
+test('visible notices: new chat, before and after compacting', async () => {
+  const h = load()
+  const said: string[] = []
+  const $ = { ui: { toast: (t: string) => said.push(t), log: (t: string) => said.push(t) } }
   await h['session.start']($, {}, async (e: any) => e)
   await h['session.compact']($, { trigger: 'auto', messages: msgs }, async () => ({ messages: msgs }))
-  const todo = dichos.join('\n')
-  expect(todo).toContain('New chat')
-  expect(todo).toContain('Before compacting')
-  expect(todo).toContain('Compaction done')
+  const all = said.join('\n')
+  expect(all).toContain('New chat')
+  expect(all).toContain('Before compacting')
+  expect(all).toContain('Compaction done')
 })
 
-test('precompute no muestra avisos', async () => {
-  const h = cargar()
-  const dichos: string[] = []
-  const $ = { ui: { toast: (t: string) => dichos.push(t), log: (t: string) => dichos.push(t) } }
+test('precompute shows no notices', async () => {
+  const h = load()
+  const said: string[] = []
+  const $ = { ui: { toast: (t: string) => said.push(t), log: (t: string) => said.push(t) } }
   await h['session.compact']($, { trigger: 'precompute', messages: msgs }, async () => ({ messages: msgs }))
-  expect(dichos.length).toBe(0)
+  expect(said.length).toBe(0)
 })

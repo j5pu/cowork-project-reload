@@ -1,63 +1,63 @@
 import type { Register } from 'claude-code'
 
-export const INSTRUCCIONES_RESUMEN = [
-  'Al resumir, NO resumas sino que copia LITERALMENTE, en secciones propias:',
-  '1. REGLAS: todas las instrucciones, procedimientos y preferencias que el usuario ha dado, tal cual las escribió.',
-  '2. DECISIONES: cada decisión tomada en la conversación, con su motivo si se dijo.',
-  '3. PASO EN CURSO: qué se estaba haciendo exactamente, qué queda pendiente y qué archivos se estaban usando.',
-  'Si algo de esto no está claro en la conversación, indícalo como "no consta" en lugar de inventarlo.',
+export const SUMMARY_INSTRUCTIONS = [
+  'When summarizing, do NOT paraphrase. Copy LITERALLY, in their own sections:',
+  '1. RULES: every instruction, procedure and preference the user has given, exactly as written.',
+  '2. DECISIONS: every decision made in the conversation, with its reason if one was given.',
+  '3. CURRENT STEP: exactly what was being done, what is still pending and which files were in use.',
+  'If any of this is unclear from the conversation, write "not stated" instead of inventing it.',
 ].join('\n')
 
-const LEER_PROYECTO = [
-  'Si hay una carpeta de proyecto conectada:',
-  '- Lee entero el CLAUDE.md de su raíz y síguelo.',
-  '- Lista los skills de .claude/skills/*/SKILL.md y lee de cada uno al menos su nombre y descripción (frontmatter), para saber que existen.',
-  '- Cuando una tarea encaje con uno de esos skills, lee su SKILL.md completo antes de hacerla.',
-  'Si no hay carpeta conectada o no existen esos archivos, dilo en una línea; no inventes su contenido.',
+const READ_PROJECT = [
+  'If a project folder is connected:',
+  '- Read the whole CLAUDE.md at its root and follow it.',
+  '- List the skills in .claude/skills/*/SKILL.md and read at least the name and description (frontmatter) of each, so you know they exist.',
+  '- When a task fits one of those skills, read its full SKILL.md before doing the task.',
+  'If no folder is connected or those files do not exist, say so in one line; do not invent their content.',
 ].join('\n')
 
-export const TEXTO_INICIO = `Nuevo chat. Antes de empezar a trabajar:\n${LEER_PROYECTO}`
+export const NEW_CHAT_TEXT = `New chat. Before starting work:\n${READ_PROJECT}`
 
-export const TEXTO_COMPACTACION =
-  `Ha habido compactación. Antes de seguir, relee CLAUDE.md, y los skills si estás en un proyecto.\n${LEER_PROYECTO}\n` +
-  'Después, contrasta el resumen con lo releído. Si no puedes recuperar qué se estaba haciendo o qué se había decidido, para y avisa al usuario en vez de suponer.'
+export const COMPACTION_TEXT =
+  `A compaction has just happened. Before continuing, re-read CLAUDE.md, and the skills if you are in a project.\n${READ_PROJECT}\n` +
+  'Then check the summary against what you re-read. If you cannot recover what was being done or what had been decided, stop and tell the user instead of guessing.'
 
-let huboCompactacion = false
+let justCompacted = false
 
-// Aviso visible para el usuario (toast arriba a la derecha y linea tenue en la transcripcion).
-// Nunca debe romper nada: si $.ui no existe (pruebas) o falla, se ignora.
-const avisar = ($: any, text: string) => {
-  try { $.ui.toast(text) } catch { /* sin interfaz */ }
-  try { $.ui.log(text) } catch { /* sin interfaz */ }
+// Visible notice for the user (toast at the top right and a dim line in the transcript).
+// It must never break anything: if $.ui is missing (tests) or fails, it is ignored.
+const notify = ($: any, text: string) => {
+  try { $.ui.toast(text) } catch { /* no interface */ }
+  try { $.ui.log(text) } catch { /* no interface */ }
 }
 
 export const register: Register = on => {
-  // Antes de compactar: pedir al resumidor que conserve reglas, decisiones y paso en curso.
+  // Before compacting: ask the summarizer to keep rules, decisions and the current step.
   on('session.compact', async ($, e, next) => {
-    if (e.agentId) return next(e) // solo la conversación principal
+    if (e.agentId) return next(e) // main conversation only
     const instructions = e.instructions
-      ? `${e.instructions}\n\n${INSTRUCCIONES_RESUMEN}`
-      : INSTRUCCIONES_RESUMEN
-    if (e.trigger !== 'precompute') avisar($, 'Before compacting: asking the summary to keep your rules, the decisions made and the current step word for word.')
+      ? `${e.instructions}\n\n${SUMMARY_INSTRUCTIONS}`
+      : SUMMARY_INSTRUCTIONS
+    if (e.trigger !== 'precompute') notify($, 'Before compacting: asking the summary to keep your rules, the decisions made and the current step word for word.')
     const r = await next({ ...e, instructions })
     if (r.skip === undefined && e.trigger !== 'precompute') {
-      huboCompactacion = true
-      avisar($, 'Compaction done: asking the agent to re-read the project CLAUDE.md and skills, and to tell you if it cannot recover what was being done.')
+      justCompacted = true
+      notify($, 'Compaction done: asking the agent to re-read the project CLAUDE.md and skills, and to tell you if it cannot recover what was being done.')
     }
     return r
-  }).catch(($, e, next) => next(e)) // si el hook falla, la compactación sigue normal
+  }).catch(($, e, next) => next(e)) // if the hook fails, compaction goes on as usual
 
-  // Al iniciar un chat: aviso visible (no cambia nada del contexto).
+  // When a chat starts: visible notice only (changes nothing in the context).
   on('session.start', async ($, e, next) => {
-    avisar($, 'New chat: asking the agent to read the project CLAUDE.md and skills before starting.')
+    notify($, 'New chat: asking the agent to read the project CLAUDE.md and skills before starting.')
     return next(e)
   })
 
-  // Al iniciar un chat y tras cada compactación (el motor vuelve a pedir el contexto).
+  // At chat start and after each compaction (the engine asks for the context again).
   on('prompt.context', async ($, e, next) => {
     const r = await next(e)
-    const text = huboCompactacion ? TEXTO_COMPACTACION : TEXTO_INICIO
-    huboCompactacion = false
-    return { ...r, blocks: [...r.blocks, { name: 'relecturaProyecto', text }] }
+    const text = justCompacted ? COMPACTION_TEXT : NEW_CHAT_TEXT
+    justCompacted = false
+    return { ...r, blocks: [...r.blocks, { name: 'projectReload', text }] }
   })
 }
