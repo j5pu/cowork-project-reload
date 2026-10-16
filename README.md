@@ -6,16 +6,28 @@ Plugin para Claude Cowork que hace que el agente relea el `CLAUDE.md` y los skil
 
 Cuando una conversación se compacta, el historial se sustituye por un resumen. Los skills leídos a mitad de chat se pierden en ese resumen, y el agente sigue sin los procedimientos que tenía. Este plugin le ordena releerlos y le pide avisar si no puede recuperar lo que se estaba haciendo, en lugar de inventarlo.
 
-## Qué hace cada hook del mod
+## Qué hacen los hooks y qué cambian
 
-Es un mod de hooks (`hooks/hooks.json` apunta a `hooks/register.ts`) con dos enganches. Ninguno hace llamadas de red, ni escribe ficheros, ni lee nada del sistema.
+El plugin es un mod con dos hooks, en `hooks/register.ts`. Se explican por separado porque el directorio pide detallar qué ve y qué cambia cada uno.
 
-| Evento | Qué hace exactamente |
-|---|---|
-| `session.compact` | Se dispara cuando se va a compactar la conversación **principal** (no los subagentes). **Añade al campo `instructions` de esa compactación un texto fijo**: copiar literalmente las reglas, las decisiones y el paso en curso en secciones propias, y escribir "no consta" si algo no está claro. Si ya había instrucciones, las conserva y añade las suyas detrás. No cambia nada más de la llamada y deja pasar el resultado tal cual. Si el hook falla, la compactación sigue normal (`catch`). |
-| `prompt.context` | Al construir el contexto, **añade un bloque de texto fijo**: en un chat nuevo, leer entero `CLAUDE.md`, listar los skills de `.claude/skills/*/SKILL.md` y leer completo el que encaje con la tarea; tras una compactación, lo mismo más contrastar el resumen con lo releído y, si no se puede recuperar qué se hacía o qué se decidió, parar y avisar. Si no hay carpeta conectada, el agente lo dice en una línea. |
+### Hook `session.compact` (línea 29 de `register.ts`)
 
-El texto añadido es siempre el mismo: no copia ni procesa mensajes del usuario.
+`session.compact` es un evento que también es el nombre de una llamada: cuando Claude Code compacta la conversación, el hook ve esa llamada, y podría cambiarla. El mod **no hace esa llamada por sí mismo**; solo la intercepta cuando otro código la hace.
+
+- **Qué ve:** el evento de compactación: quién la dispara (`trigger`), si es de un subagente (`agentId`) y las instrucciones de resumen que ya lleve (`instructions`).
+- **Qué cambia:** únicamente el campo `instructions`. Le añade al final un texto fijo que pide copiar literalmente reglas, decisiones y paso en curso en secciones propias, y escribir "no consta" si algo no está claro. Si ya había instrucciones, las conserva y añade las suyas detrás.
+- **Qué no toca:** ningún otro campo de la llamada, el resultado de la compactación, los mensajes ni los archivos. Ignora las compactaciones de subagentes.
+- **Si falla:** el manejador `.catch` deja pasar el evento sin cambios y la compactación sigue normal.
+
+### Hook `prompt.context` (línea 40 de `register.ts`)
+
+`prompt.context` es un evento por el que pasan las instrucciones y el contexto que recibe el modelo.
+
+- **Qué ve:** la lista de bloques de contexto que Claude Code va a enviar.
+- **Qué cambia:** **añade un bloque** (`relecturaProyecto`) con un texto fijo. En un chat nuevo pide leer entero `CLAUDE.md`, listar los skills de `.claude/skills/*/SKILL.md` y leer completo el que encaje con la tarea. Tras una compactación pide lo mismo y, además, contrastar el resumen con lo releído y avisar al usuario si no se puede recuperar qué se hacía o qué se había decidido.
+- **Qué no toca:** no modifica, quita ni reordena los bloques existentes, ni los ajustes, ni otras instrucciones.
+
+Ninguno de los dos hooks hace llamadas de red, ni lee o escribe archivos, ni lee variables de entorno o ajustes, ni guarda los mensajes del usuario. El texto que añaden es siempre el mismo.
 
 ## Instalación
 
