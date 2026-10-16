@@ -56,6 +56,20 @@ hooks/register.ts                 los dos enganches
 hooks/register.test.ts            pruebas (bun test / claude plugin test)
 ```
 
+## TODO: alternativa sin mod (hooks clásicos)
+
+Pendiente por si el mod no llega a ejecutarse (por ejemplo, con plan Team o Enterprise o con ajustes gestionados, donde la guarda `cc-plugin-sec-default` salta `session.compact` y `prompt.context`). Se probó con Claude Code 2.1.299 y es lo que se haría:
+
+- [ ] Sustituir `hooks/hooks.json` por hooks clásicos (`hooks` en lugar de `modules`) y quitar `register.ts`, `register.test.ts` y `tsconfig.json`.
+- [ ] `SessionStart` con matcher `startup` y otro con `compact`, ambos llamando a un mismo script `hooks/session-start.sh startup|compact` con ruta literal bajo `${CLAUDE_PLUGIN_ROOT}` (entre comillas). Su salida estándar se añade al contexto del modelo. Con esto el agente relee `CLAUDE.md` y los skills al empezar y tras compactar. **Probado: funciona en una cuenta Team.**
+- [ ] `PreCompact` solo puede bloquear (código 2); su salida no entra en el resumen. Para proteger reglas y decisiones habría que guardar un respaldo antes de compactar:
+  - el script recibe `transcript_path` y `session_id`; escribiría en `.claude/precompact/<session_id>.md` (un fichero por sesión, para que dos chats no se pisen) los mensajes literales del usuario;
+  - `SessionStart:compact` ordenaría consultarlo solo si el resumen no basta, dando prioridad a los mensajes más recientes y confirmando con el usuario cualquier regla dudosa;
+  - filtrar claves y tokens evidentes antes de escribir. Riesgos a valorar: reglas ya cambiadas que reaparecen, datos sensibles en disco y tamaño del fichero.
+- [ ] Evitar el heredoc (`cat <<EOT`) en los scripts: el directorio lo marcó como `COMMAND_SCRIPT_NOT_FOLLOWED` (retención de política, no bloquea). Usar `echo` o `printf`.
+- [ ] Reescribir las pruebas (`tests/run.sh`): scripts, `hooks.json` sin `modules`, y prueba real con `--plugin-dir`, `/compact` y comprobación de que el agente recupera una regla de `CLAUDE.md`.
+- [ ] Documentar en el README qué hace cada script. Una versión completa de estos hooks está en el historial de git (commit `4e9c60b`).
+
 ## Licencia
 
 MIT.
