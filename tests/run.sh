@@ -11,6 +11,7 @@ start=$(CLAUDE_PLUGIN_ROOT="$PWD" "$PWD/hooks/session-start.sh" start); rc1=$?
 comp=$(CLAUDE_PLUGIN_ROOT="$PWD" "$PWD/hooks/session-start.sh" compact); rc2=$?
 [ $rc1 -eq 0 ] && [ $rc2 -eq 0 ] && ok "script exits 0 in both modes" || ko "script exits 0 in both modes"
 echo "$start" | grep -q '~/.claude/CLAUDE.md' && ok "mentions user-level file" || ko "mentions user-level file"
+echo "$start" | grep -q '/Users/j5pu/.claude/CLAUDE.md' && ok "full user-level path" || ko "full user-level path"
 echo "$start" | grep -q 'skills' && ok "mentions skills" || ko "mentions skills"
 echo "$start" | grep -q 'tell the user' && ok "asks to announce what was read" || ko "asks to announce what was read"
 echo "$comp" | grep -q 'compacted' && ok "compact mode says compacted" || ko "compact mode says compacted"
@@ -19,5 +20,5 @@ grep -q '"matcher": "startup"' hooks/hooks.json && grep -q '"matcher": "compact"
 grep -q '"modules"' hooks/hooks.json && ko "no mod modules" || ok "no mod modules"
 grep -q 'PreCompact' hooks/hooks.json && ko "no PreCompact" || ok "no PreCompact"
 grep -q '<<' hooks/session-start.sh && ko "no heredoc" || ok "no heredoc"
-[ "$(python3 -c 'import json;print(json.load(open(".claude-plugin/plugin.json"))["version"])')" = "1.1.0" ] && ok "version 1.1.0" || ko "version 1.1.0"
+[ "$(python3 -c 'import json;print(json.load(open(".claude-plugin/plugin.json"))["version"])')" = "1.1.1" ] && ok "version 1.1.1" || ko "version 1.1.1"
 exit $fail
