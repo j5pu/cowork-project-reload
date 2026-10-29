@@ -15,6 +15,7 @@ echo "Where to read: use the Filesystem MCP server (tools read_text_file, read_m
 echo "Never say a folder or file does not exist unless the listing or read itself failed with that error. If a listing or read fails for another reason, report the real error, and if the folder exists, list its contents."
 echo "Do not claim to have read anything you did not read, and do not invent the content of any file."
 if [ "$1" = "compact" ]; then
+  echo "The compaction summary and any copy of these files already in your context do not count as reading them. Read every file again from disk with the Filesystem tools, even if you believe you already have its content, and say in your announcement that you re-read them from disk."
   echo "If you cannot recover what was being done and the decisions already taken, say so instead of guessing."
 fi
 exit 0

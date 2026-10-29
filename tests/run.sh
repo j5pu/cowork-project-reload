@@ -18,11 +18,12 @@ echo "$start" | grep -q 'Filesystem MCP server' && ok "tells where to read" || k
 echo "$start" | grep -q 'follow every reference' && ok "follows references" || ko "follows references"
 echo "$start" | grep -q 'skills' && ok "mentions skills" || ko "mentions skills"
 echo "$start" | grep -q 'tell the user' && ok "asks to announce what was read" || ko "asks to announce what was read"
+echo "$comp" | grep -q 'do not count as reading' && ok "compact: re-read from disk" || ko "compact: re-read from disk"
 echo "$comp" | grep -q 'compacted' && ok "compact mode says compacted" || ko "compact mode says compacted"
 echo "$start" | grep -q 'compacted' && ko "start mode has no compaction text" || ok "start mode has no compaction text"
 grep -q '"matcher": "startup"' hooks/hooks.json && grep -q '"matcher": "compact"' hooks/hooks.json && ok "startup and compact matchers" || ko "startup and compact matchers"
 grep -q '"modules"' hooks/hooks.json && ko "no mod modules" || ok "no mod modules"
 grep -q 'PreCompact' hooks/hooks.json && ko "no PreCompact" || ok "no PreCompact"
 grep -q '<<' hooks/session-start.sh && ko "no heredoc" || ok "no heredoc"
-[ "$(python3 -c 'import json;print(json.load(open(".claude-plugin/plugin.json"))["version"])')" = "1.1.5" ] && ok "version 1.1.5" || ko "version 1.1.5"
+[ "$(python3 -c 'import json;print(json.load(open(".claude-plugin/plugin.json"))["version"])')" = "1.1.6" ] && ok "version 1.1.6" || ko "version 1.1.6"
 exit $fail
