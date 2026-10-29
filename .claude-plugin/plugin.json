@@ -1,7 +1,7 @@
 {
   "name": "cowork-project-reload",
-  "version": "0.4.0",
-  "description": "When a chat starts and after every compaction, makes the agent re-read the project's CLAUDE.md and skills; asks the compaction summary to keep rules and decisions.",
+  "version": "1.0.0",
+  "description": "At the start of a chat, makes the agent read the user-level ~/.claude/CLAUDE.md first and then the CLAUDE.md of the connected project folder.",
   "author": {
     "name": "mnopi"
   },

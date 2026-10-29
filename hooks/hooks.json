@@ -1,1 +1,16 @@
-{ "modules": ["./register.ts"] }
+{
+  "description": "At the start of a chat, asks the agent to read the user-level CLAUDE.md and then the project CLAUDE.md.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh\""
+          }
+        ]
+      }
+    ]
+  }
+}
