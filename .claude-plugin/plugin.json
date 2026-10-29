@@ -1,6 +1,6 @@
 {
   "name": "cowork-project-reload",
-  "version": "1.1.3",
+  "version": "1.1.4",
   "description": "At chat start and after a compaction, makes the agent read ~/.claude/CLAUDE.md, the project CLAUDE.md and the skills, and tell you what it read.",
   "author": {
     "name": "mnopi"
