@@ -1,11 +1,12 @@
 # cowork-project-reload
 
-At the start of every chat, this plugin asks the agent to read two files before doing anything else:
+At the start of every chat and after every compaction, this plugin asks the agent to read, in this order:
 
-1. `~/.claude/CLAUDE.md`, the user-level instructions that apply to all projects.
-2. The `CLAUDE.md` at the root of the connected project folder, with the project-specific rules.
+1. `~/.claude/CLAUDE.md`, the user-level instructions for all projects, if it has access to it.
+2. The `CLAUDE.md` at the root of the connected project folder, if a folder is connected.
+3. The skills under `.claude/skills` in the project folder and under `~/.claude/skills`.
 
-If the two conflict, the project file prevails. If a file cannot be reached, the agent says so in one line and does not invent its content.
+Then the agent tells you in one short message what it read, which skills it has, and what it could not reach. If the two CLAUDE.md files conflict, the project file prevails. The agent must not claim to have read anything it did not read.
 
 ## Install
 
@@ -15,22 +16,23 @@ If the two conflict, the project file prevails. If a file cannot be reached, the
 
 ## How it works
 
-It uses a classic hook, so it runs in both Claude Code and Cowork:
+It uses classic hooks, so it is meant to run in both Claude Code and Cowork:
 
-- `hooks/hooks.json` registers one `SessionStart` hook with the `startup` matcher.
-- `hooks/session-start.sh` prints the instruction; the output is added to the model's context.
+- `hooks/hooks.json` registers two `SessionStart` hooks: matcher `startup` (new chat) and matcher `compact` (after a compaction).
+- `hooks/session-start.sh start|compact` prints the instruction; the output is added to the model's context.
 
-The version 1.x line deliberately does nothing on compaction. Only the chat start is covered.
+It does not use `PreCompact`, so it cannot change the compaction summary. It only makes the agent read again afterwards.
 
 ## Notes
 
-- Claude Code already loads `~/.claude/CLAUDE.md` and the project `CLAUDE.md` natively; the hook reinforces it and makes the order explicit.
-- In Cowork the agent runs in a VM, so `~/.claude/CLAUDE.md` of your computer may not be visible from it. The instruction tells the agent to use the device tools in that case.
-- The earlier 0.x line was a mod (compaction summary and prompt context). It lives on `main` at tag `v0.4.0`.
+- Claude Code already loads `~/.claude/CLAUDE.md` and the project `CLAUDE.md` natively; the hook makes the order explicit and adds the announcement.
+- In Cowork the agent runs in a VM, so files on your computer may not be visible from it. The instruction tells the agent to use the device tools, and to say so if it cannot reach them (for example in a mobile chat without folder access).
+- The 0.x line was a mod (compaction summary and prompt context). It lives on `main` at tag `v0.4.0`.
+- Whether the hooks fire in Cowork has to be checked in a real chat.
 
 ## Tests
 
-`tests/run.sh` runs offline checks (valid JSON, script behaviour, no compaction wording, version).
+`tests/run.sh` runs offline checks (valid JSON, both script modes, matchers, no mod, no PreCompact, version).
 
 ## License
 

@@ -1,5 +1,5 @@
 {
-  "description": "At the start of a chat, asks the agent to read the user-level CLAUDE.md and then the project CLAUDE.md.",
+  "description": "At chat start and after a compaction, asks the agent to read the user-level and project CLAUDE.md and the skills, and to say what it read.",
   "hooks": {
     "SessionStart": [
       {
@@ -7,7 +7,16 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh\""
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh\" start"
+          }
+        ]
+      },
+      {
+        "matcher": "compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh\" compact"
           }
         ]
       }
