@@ -25,5 +25,5 @@ grep -q '"matcher": "startup"' hooks/hooks.json && grep -q '"matcher": "compact"
 grep -q '"modules"' hooks/hooks.json && ko "no mod modules" || ok "no mod modules"
 grep -q 'PreCompact' hooks/hooks.json && ko "no PreCompact" || ok "no PreCompact"
 grep -q '<<' hooks/session-start.sh && ko "no heredoc" || ok "no heredoc"
-[ "$(python3 -c 'import json;print(json.load(open(".claude-plugin/plugin.json"))["version"])')" = "1.1.6" ] && ok "version 1.1.6" || ko "version 1.1.6"
+[ "$(python3 -c 'import json;print(json.load(open(".claude-plugin/plugin.json"))["version"])')" = "1.1.7" ] && ok "version 1.1.7" || ko "version 1.1.7"
 exit $fail
